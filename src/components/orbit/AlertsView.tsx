@@ -17,10 +17,11 @@ interface AlertsViewProps {
 export const AlertsView = ({ cluster, namespace, application }: AlertsViewProps) => {
   const [expandedAlerts, setExpandedAlerts] = useState<Set<number>>(new Set());
 
-  const { data: alerts, isLoading, refetch } = useQuery({
+  const { data: alerts, isLoading, error, refetch } = useQuery({
     queryKey: ["correlatedAlerts", cluster, namespace, application],
     queryFn: () => api.getCorrelatedAlerts(cluster, namespace, application),
     enabled: false, // Don't auto-fetch
+    retry: false, // Don't retry on error since API returns explicit failure
   });
 
   const toggleAlert = (index: number) => {
@@ -67,7 +68,12 @@ export const AlertsView = ({ cluster, namespace, application }: AlertsViewProps)
         </div>
       </CardHeader>
       <CardContent>
-        {!alerts ? (
+        {error ? (
+          <div className="text-center text-destructive py-8">
+            <p className="font-semibold">Error fetching alerts</p>
+            <p className="text-sm mt-1">{error.message}</p>
+          </div>
+        ) : !alerts ? (
           <p className="text-center text-muted-foreground py-8">
             Click "Fetch Correlated Alerts" to load data
           </p>
