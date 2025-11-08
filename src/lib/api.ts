@@ -1,23 +1,39 @@
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "http://kubenode01-cpu-vllm-oci.p31.eng.sjc01.qualys.com:8000";
 
 export const api = {
   // Cluster endpoints
   async getAvailableClusters() {
     const response = await fetch(`${API_BASE_URL}/clusters/available`);
     if (!response.ok) throw new Error("Failed to fetch clusters");
-    return response.json();
+    const data = await response.json();
+    // Normalize to an array for UI consumption
+    if (Array.isArray(data)) return data;
+    if (data?.data) return data.data;
+    if (data?.clusters) return data.clusters;
+    if (data?.items) return data.items;
+    return [];
   },
 
   async getNamespaces(cluster: string) {
     const response = await fetch(`${API_BASE_URL}/clusters/${cluster}/namespaces`);
     if (!response.ok) throw new Error("Failed to fetch namespaces");
-    return response.json();
+    const data = await response.json();
+    if (Array.isArray(data)) return data;
+    if (data?.data) return data.data;
+    if (data?.namespaces) return data.namespaces;
+    if (data?.items) return data.items;
+    return [];
   },
 
   async getApplications(cluster: string) {
     const response = await fetch(`${API_BASE_URL}/clusters/${cluster}/applications`);
     if (!response.ok) throw new Error("Failed to fetch applications");
-    return response.json();
+    const data = await response.json();
+    if (Array.isArray(data)) return data;
+    if (data?.data) return data.data;
+    if (data?.applications) return data.applications;
+    if (data?.items) return data.items;
+    return [];
   },
 
   // Query endpoint
@@ -81,7 +97,13 @@ export const api = {
   async getStreamingAlerts() {
     const response = await fetch(`${API_BASE_URL}/streaming/alerts`);
     if (!response.ok) throw new Error("Failed to fetch streaming alerts");
-    return response.json();
+    const data = await response.json();
+    // Ensure an array is returned
+    if (Array.isArray(data)) return data;
+    if (data?.data) return data.data;
+    if (data?.alerts) return data.alerts;
+    if (data?.items) return data.items;
+    return [];
   },
 
   // Health endpoints

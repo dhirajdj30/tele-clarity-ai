@@ -38,7 +38,7 @@ export const LiveAlertsSidebar = () => {
     }
   };
 
-  const latestAlerts = alerts?.slice(0, 8) || [];
+  const latestAlerts = Array.isArray(alerts) ? alerts.slice(0, 8) : [];
 
   return (
     <aside className="w-80 border-l border-border p-6 bg-card/50">

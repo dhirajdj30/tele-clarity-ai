@@ -75,11 +75,13 @@ export const FilterControls = ({
             <SelectValue placeholder="Select cluster" />
           </SelectTrigger>
           <SelectContent>
-            {clusters?.map((c: string) => (
-              <SelectItem key={c} value={c}>
-                {c}
-              </SelectItem>
-            ))}
+            {Array.isArray(clusters)
+              ? clusters.map((c: string) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))
+              : null}
           </SelectContent>
         </Select>
       </div>
@@ -95,11 +97,13 @@ export const FilterControls = ({
             <SelectValue placeholder="Select namespace" />
           </SelectTrigger>
           <SelectContent>
-            {namespaces?.map((ns: string) => (
-              <SelectItem key={ns} value={ns}>
-                {ns}
-              </SelectItem>
-            ))}
+            {Array.isArray(namespaces)
+              ? namespaces.map((ns: string) => (
+                  <SelectItem key={ns} value={ns}>
+                    {ns}
+                  </SelectItem>
+                ))
+              : null}
           </SelectContent>
         </Select>
       </div>
@@ -115,11 +119,13 @@ export const FilterControls = ({
             <SelectValue placeholder="Select application" />
           </SelectTrigger>
           <SelectContent>
-            {applications?.map((app: string) => (
-              <SelectItem key={app} value={app}>
-                {app}
-              </SelectItem>
-            ))}
+            {Array.isArray(applications)
+              ? applications.map((app: string) => (
+                  <SelectItem key={app} value={app}>
+                    {app}
+                  </SelectItem>
+                ))
+              : null}
           </SelectContent>
         </Select>
       </div>
