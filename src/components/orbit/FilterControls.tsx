@@ -44,9 +44,9 @@ export const FilterControls = ({
   });
 
   const { data: applications } = useQuery({
-    queryKey: ["applications", cluster],
-    queryFn: () => api.getApplications(cluster),
-    enabled: !!cluster,
+    queryKey: ["applications", cluster, namespace],
+    queryFn: () => api.getApplications(cluster, namespace),
+    enabled: !!cluster && !!namespace,
   });
 
   // Clear namespace and application when cluster changes
@@ -113,7 +113,7 @@ export const FilterControls = ({
         <Select
           value={application}
           onValueChange={onApplicationChange}
-          disabled={!cluster}
+          disabled={!namespace}
         >
           <SelectTrigger id="application">
             <SelectValue placeholder="Select application" />

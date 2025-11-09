@@ -1,4 +1,49 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+
+const LogoWithGlow = () => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 50);
+    return () => clearTimeout(t);
+  }, []);
+
+  const containerClass = `${mounted ? "opacity-100 translate-y-0 scale-100" : "opacity-0 -translate-y-4 scale-95"}`;
+
+  return (
+    <div className={`${containerClass} w-full h-full flex items-center justify-center transition-all duration-700 ease-out`}>
+      {/* No glow applied; keep logo clean and centered. Add hover/focus effects (scale + ring) */}
+      <img
+        src="https://ik.imagekit.io/qualys/image/logo/qualys-shield.svg"
+        alt="Qualys logo"
+        className="w-full h-full object-contain transform transition-transform duration-300 ease-out hover:scale-105 focus:scale-105 focus:outline-none focus:ring-2 focus:ring-primary rounded"
+      />
+    </div>
+  );
+};
+
+const TitleAnimated = ({ children }: { children: React.ReactNode }) => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 120);
+    return () => clearTimeout(t);
+  }, []);
+  const cls = `${mounted ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-6"} transition-all duration-800 ease-out`;
+  return <h1 className={cls + " text-5xl md:text-6xl font-bold tracking-tight mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent text-center"}>{children}</h1>;
+};
+
+const SubtitleAnimated = ({ children }: { children: React.ReactNode }) => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    // Slightly longer delay so subtitle appears after the title settles
+    const t = setTimeout(() => setMounted(true), 420);
+    return () => clearTimeout(t);
+  }, []);
+  // Longer duration with ease-in-out for a gentler slide/fade
+  const cls = `${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"} transition-all duration-[1100ms] ease-in-out`;
+  return <p className={cls + " text-xl md:text-2xl text-muted-foreground font-medium"}>{children}</p>;
+};
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,8 +67,8 @@ const Home = () => {
       id: "orbit",
       title: "ORBIT",
       subtitle: "Risk-Based Telemetry",
-      tagline: "From Chaos to Clarity",
-      description: "AI-powered operational intelligence for monitoring clusters, logs, metrics and alerts.",
+      // tagline: "From Chaos to Clarity",
+      description: "AI-powered operational intelligence for monitoring application, logs, metrics and alerts.",
       status: "Active",
       borderColor: "border-primary",
       icon: Activity,
@@ -42,8 +87,8 @@ const Home = () => {
     {
       id: "co",
       title: "CO",
-      subtitle: "Cloud Optimization",
-      description: "Cost analysis and resource optimization recommendations powered by AI.",
+      subtitle: "Container Orchestration",
+      description: "Smart orchestration assistant for automated, intelligent container management.",
       status: "Coming Soon",
       borderColor: "border-green-500",
       icon: Cloud,
@@ -51,8 +96,8 @@ const Home = () => {
     },
     {
       id: "k8s",
-      title: "K8S",
-      subtitle: "Kubernetes Intelligence",
+      title: "Kubevirt",
+      subtitle: "Kubevirt Intelligence",
       description: "Deep cluster insights, pod diagnostics and automated remediation suggestions.",
       status: "Coming Soon",
       borderColor: "border-purple-500",
@@ -97,13 +142,14 @@ const Home = () => {
         {/* Header Section */}
         <header className="text-center mb-16 relative">
           <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[600px] h-[600px] bg-primary/30 rounded-full blur-3xl opacity-20 -z-10" />
-          
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            INTELLIGENT PLATFORM OPERATIONS HUB
-          </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground font-medium">
-            Centralised Automation, Insights and AI Driven Operations
-          </p>
+          {/* Qualys logo from public folder */}
+          <div className="mx-auto mb-6 w-28 h-28 flex items-center justify-center transition-transform duration-700 ease-out">
+            {/* Animated logo: entrance */}
+            <LogoWithGlow />
+          </div>
+
+          <TitleAnimated>INTELLIGENT PLATFORM OPERATIONS HUB</TitleAnimated>
+          <SubtitleAnimated>Centralised Automation, Insights and AI Driven Operations</SubtitleAnimated>
         </header>
 
         {/* Available AI Projects */}
@@ -133,11 +179,11 @@ const Home = () => {
                     <CardDescription className="text-sm font-medium">
                       {project.subtitle}
                     </CardDescription>
-                    {project.tagline && (
+                    {/* {project.tagline && (
                       <p className="text-xs text-muted-foreground italic mt-1">
                         {project.tagline}
                       </p>
-                    )}
+                    )} */}
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground mb-4">
@@ -187,7 +233,7 @@ const Home = () => {
 
         {/* Footer */}
         <footer className="mt-20 text-center text-sm text-muted-foreground">
-          <p>Built with React + TypeScript + Tailwind CSS</p>
+          <p>© 2025 Intelligent Platform Operations Hub.  Empowering DevOps with AI-driven automation, insights, and orchestration.</p>
         </footer>
       </div>
     </div>

@@ -1,22 +1,20 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { nlqApi } from "@/lib/nlqApi";
 import { Badge } from "@/components/ui/badge";
-import { Database, Brain, Server, Activity } from "lucide-react";
+import { Database, Brain, Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface DatabaseSelectorProps {
   database: string;
   model: string;
-  apiBase: string;
+  apiBase?: string;
   onDatabaseChange: (value: string) => void;
   onModelChange: (value: string) => void;
-  onApiBaseChange: (value: string) => void;
+  onApiBaseChange?: (value: string) => void;
 }
-
 export const DatabaseSelector = ({
   database,
   model,
@@ -27,22 +25,22 @@ export const DatabaseSelector = ({
 }: DatabaseSelectorProps) => {
   const { toast } = useToast();
 
-  const { data: health } = useQuery({
+  const { data: health, refetch: refetchHealth } = useQuery({
     queryKey: ["nlq-health"],
     queryFn: nlqApi.health,
     refetchInterval: 30000,
-  });
-
-  const { data: metrics } = useQuery({
-    queryKey: ["nlq-metrics"],
-    queryFn: nlqApi.getMetrics,
-    refetchInterval: 10000,
   });
 
   const handleDatabaseChange = async (value: string) => {
     try {
       await nlqApi.setDatabase(value);
       onDatabaseChange(value);
+      // refresh health to reflect new host/database immediately
+      try {
+        await refetchHealth();
+      } catch (e) {
+        // ignore refetch errors here; UI will update on next poll
+      }
       toast({
         title: "Database changed",
         description: `Switched to ${value}`,
@@ -56,9 +54,30 @@ export const DatabaseSelector = ({
     }
   };
 
-  const getStatusBadge = (status?: string) => {
-    if (!status) return <Badge variant="secondary">Unknown</Badge>;
-    if (status === "healthy" || status === "connected") {
+  const handleModelChange = (value: string) => {
+    onModelChange(value);
+    if (value === "mistral12b") {
+      onApiBaseChange && onApiBaseChange("https://kubeingress.p31.eng.sjc01.qualys.com/mistral12b/v1");
+    } else if (value === "phi-4-mini-instruct") {
+      onApiBaseChange && onApiBaseChange("https://kubeingress.p31.eng.sjc01.qualys.com/cpu/phi4mini/v1");
+    } else {
+      onApiBaseChange && onApiBaseChange("");
+    }
+    // refetch health to update LLM model indicator
+    try {
+      refetchHealth();
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const getStatusBadge = (status?: string | boolean) => {
+    if (status === undefined || status === null || status === "") {
+      return <Badge variant="secondary">Unknown</Badge>;
+    }
+    // status might be boolean for some fields
+    const s = typeof status === "boolean" ? (status ? "connected" : "disconnected") : String(status);
+    if (s === "healthy" || s === "connected") {
       return <Badge className="bg-success text-success-foreground">Healthy</Badge>;
     }
     return <Badge variant="destructive">Error</Badge>;
@@ -86,9 +105,9 @@ export const DatabaseSelector = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="p43">P43</SelectItem>
-                  <SelectItem value="p05">P05</SelectItem>
-                  <SelectItem value="p07">P07</SelectItem>
+                  <SelectItem value="p43_eng_sjc01">P43 ENG SJC01</SelectItem>
+                  <SelectItem value="p05_eng_sjc01">P05 ENG SJC01</SelectItem>
+                  <SelectItem value="p07_eng_sjc01">P07 ENG SJC01</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -99,7 +118,7 @@ export const DatabaseSelector = ({
                 <Brain className="h-4 w-4" />
                 AI Model
               </Label>
-              <Select value={model} onValueChange={onModelChange}>
+              <Select value={model} onValueChange={handleModelChange}>
                 <SelectTrigger id="model">
                   <SelectValue />
                 </SelectTrigger>
@@ -109,20 +128,6 @@ export const DatabaseSelector = ({
                 </SelectContent>
               </Select>
             </div>
-
-            {/* API Base */}
-            <div className="space-y-2">
-              <Label htmlFor="apiBase" className="flex items-center gap-2">
-                <Server className="h-4 w-4" />
-                API Base
-              </Label>
-              <Input
-                id="apiBase"
-                value={apiBase}
-                onChange={(e) => onApiBaseChange(e.target.value)}
-                placeholder="http://localhost:8000"
-              />
-            </div>
           </div>
 
           {/* Status Indicators */}
@@ -130,43 +135,26 @@ export const DatabaseSelector = ({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-border">
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Backend</p>
-                {getStatusBadge(health.backend)}
+                {getStatusBadge(health.status)}
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">ClickHouse</p>
-                {getStatusBadge(health.clickhouse)}
+                {getStatusBadge(health.databases?.clickhouse)}
               </div>
               <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">LLM</p>
-                {getStatusBadge(health.llm)}
+                <p className="text-xs text-muted-foreground">LLM Model</p>
+                {/* Prefer the user's selected model so the UI updates immediately on selection.
+                    Show backend-reported model in parentheses when different. */}
+                <span className="text-sm">
+                  {model}
+                  {/* {health.llm_model && health.llm_model !== model ? (
+                    <span className="text-muted-foreground">{' '}(backend: {health.llm_model})</span>
+                  ) : null} */}
+                </span>
               </div>
               <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Overall</p>
-                {getStatusBadge(health.status)}
-              </div>
-            </div>
-          )}
-
-          {/* Metrics */}
-          {metrics && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-border">
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Success Rate</p>
-                <p className="text-lg font-semibold text-success">
-                  {(metrics.success_rate * 100).toFixed(1)}%
-                </p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Total Queries</p>
-                <p className="text-lg font-semibold">{metrics.total_queries}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Failed</p>
-                <p className="text-lg font-semibold text-destructive">{metrics.failed_queries}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Avg Response</p>
-                <p className="text-lg font-semibold">{metrics.avg_response_time.toFixed(2)}s</p>
+                <p className="text-xs text-muted-foreground">Current Host</p>
+                <span className="text-sm truncate">{health.databases?.current_host}</span>
               </div>
             </div>
           )}

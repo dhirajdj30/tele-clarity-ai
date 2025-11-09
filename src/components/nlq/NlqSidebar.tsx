@@ -3,7 +3,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { QueryHistory, ExampleQuery } from "@/lib/nlqApi";
-import { Clock, Trash2, CheckCircle, XCircle, Lightbulb } from "lucide-react";
+import { Clock, Trash2, CheckCircle, XCircle, Lightbulb, Copy, Play } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { nlqApi } from "@/lib/nlqApi";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -12,29 +12,30 @@ import { ChevronDown } from "lucide-react";
 interface NlqSidebarProps {
   queryHistory: QueryHistory[];
   onClearHistory: () => void;
+  // called when an example query is clicked
+  onRunExample?: (query: string) => void;
 }
 
-export const NlqSidebar = ({ queryHistory, onClearHistory }: NlqSidebarProps) => {
+export const NlqSidebar = ({ queryHistory, onClearHistory, onRunExample }: NlqSidebarProps) => {
   const { data: examples } = useQuery<ExampleQuery[]>({
     queryKey: ["nlq-examples"],
     queryFn: nlqApi.getExamples,
     initialData: [
       {
-        category: "Basic Queries",
+        category: "Log Queries",
         queries: [
-          "Show top 10 users by activity",
-          "What are the error rates today?",
-          "List all active sessions",
+          "Show me the latest 10 log entries",
+          "How many error logs in the last hour?",
+          "What are the most common log levels?",
+          "Find logs with ERROR level from today",
+          "Show logs grouped by hour for the last day",
+          "Which hosts generate the most logs?",
+          "Show me logs with specific error messages",
+          "Show logs by application name",
+          "What applications generate the most logs?",
+          "Show logs from a specific time range",
         ],
-      },
-      {
-        category: "Analytics",
-        queries: [
-          "Average response time by endpoint",
-          "Count requests per hour",
-          "Show slowest queries",
-        ],
-      },
+      }
     ],
   });
 
@@ -49,7 +50,7 @@ export const NlqSidebar = ({ queryHistory, onClearHistory }: NlqSidebarProps) =>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[200px]">
+          <ScrollArea className="h-[200px] px-1 py-2 custom-scrollbar">
             <div className="space-y-3">
               {examples?.map((category, idx) => (
                 <Collapsible key={idx}>
@@ -59,12 +60,53 @@ export const NlqSidebar = ({ queryHistory, onClearHistory }: NlqSidebarProps) =>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-2 space-y-1">
                     {category.queries.map((query, qIdx) => (
-                      <p
-                        key={qIdx}
-                        className="text-xs text-muted-foreground hover:text-primary cursor-pointer pl-2 py-1 border-l-2 border-border hover:border-primary transition-colors"
-                      >
-                        {query}
-                      </p>
+                      <div key={qIdx} className="flex items-center justify-between gap-2">
+                        <p
+                          className="text-xs text-muted-foreground hover:text-primary cursor-pointer pl-2 py-1 border-l-2 border-border hover:border-primary transition-colors flex-1"
+                          onClick={() => {
+                            if (onRunExample) {
+                              onRunExample(query);
+                              return;
+                            }
+                            const handler = (window as any).__runExampleHandler;
+                            if (handler && typeof handler === 'function') handler(query);
+                          }}
+                        >
+                          {query}
+                        </p>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              navigator.clipboard.writeText(query).catch(() => {});
+                            }}
+                            title="Copy query"
+                            className="h-6 w-6 p-0"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              if (onRunExample) {
+                                onRunExample(query);
+                                return;
+                              }
+                              const handler = (window as any).__runExampleHandler;
+                              if (handler && typeof handler === 'function') {
+                                handler(query);
+                                return;
+                              }
+                            }}
+                            title="Run query"
+                            className="h-6 w-6 p-0"
+                          >
+                            <Play className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
                     ))}
                   </CollapsibleContent>
                 </Collapsible>

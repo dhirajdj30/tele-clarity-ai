@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://kubenode01-cpu-vllm-oci.p31.eng.sjc01.qualys.com:8000";
+const API_BASE_URL = "http://localhost:8000";
 
 export const api = {
   // Cluster endpoints
@@ -25,8 +25,11 @@ export const api = {
     return [];
   },
 
-  async getApplications(cluster: string) {
-    const response = await fetch(`${API_BASE_URL}/clusters/${cluster}/applications`);
+  async getApplications(cluster: string, namespace?: string) {
+    const params = new URLSearchParams();
+    if (namespace) params.append("namespace", namespace);
+    const url = `${API_BASE_URL}/clusters/${cluster}/applications${params.toString() ? `?${params.toString()}` : ""}`;
+    const response = await fetch(url);
     if (!response.ok) throw new Error("Failed to fetch applications");
     const data = await response.json();
     if (Array.isArray(data)) return data;
@@ -168,8 +171,11 @@ export const api = {
     return [];
   },
 
-  async getStreamingAlerts() {
-    const response = await fetch(`${API_BASE_URL}/streaming/alerts`);
+  async getStreamingAlerts(cluster?: string) {
+    const params = new URLSearchParams();
+    if (cluster) params.append("environment", cluster);
+    const url = `${API_BASE_URL}/streaming/alerts${params.toString() ? `?${params.toString()}` : ""}`;
+    const response = await fetch(url);
     if (!response.ok) throw new Error("Failed to fetch streaming alerts");
     const data = await response.json();
     // Ensure an array is returned

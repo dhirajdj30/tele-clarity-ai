@@ -120,7 +120,8 @@ const Orbit = () => {
         </div>
 
         {/* Right Sidebar */}
-        <LiveAlertsSidebar />
+        <LiveAlertsSidebar cluster={cluster} />
+    
       </div>
     </div>
   );

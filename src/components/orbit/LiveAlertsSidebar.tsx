@@ -6,12 +6,16 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const LiveAlertsSidebar = () => {
+interface LiveAlertsSidebarProps {
+  cluster?: string;
+}
+
+export const LiveAlertsSidebar = ({ cluster }: LiveAlertsSidebarProps) => {
   const [autoRefresh, setAutoRefresh] = useState(true);
 
   const { data: alerts, isLoading, refetch } = useQuery({
-    queryKey: ["streamingAlerts"],
-    queryFn: api.getStreamingAlerts,
+    queryKey: ["streamingAlerts", cluster ?? "default"],
+    queryFn: () => api.getStreamingAlerts(cluster),
     refetchInterval: autoRefresh ? 30000 : false, // 30 seconds
   });
 
@@ -22,7 +26,7 @@ export const LiveAlertsSidebar = () => {
       }, 30000);
       return () => clearInterval(interval);
     }
-  }, [autoRefresh, refetch]);
+  }, [autoRefresh, refetch, cluster]);
 
   const getSeverityColor = (severity: string) => {
     switch (severity?.toLowerCase()) {

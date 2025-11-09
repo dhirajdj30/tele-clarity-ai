@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface QueryInterfaceProps {
@@ -94,64 +94,96 @@ export const QueryInterface = ({ application, timeRange }: QueryInterfaceProps) 
       {result && (
         <Card className="bg-card border-primary/20 border-2">
           <CardHeader>
-            <CardTitle className="text-lg">Query Results</CardTitle>
+            <div className="flex items-center justify-between w-full">
+              <CardTitle className="text-lg">Query Results</CardTitle>
+              <div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    try {
+                      const toCopy = result.synthesis ?? result;
+                      navigator.clipboard.writeText(JSON.stringify(toCopy, null, 2));
+                    } catch (e) {
+                      // ignore
+                    }
+                  }}
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy JSON
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {result.summary && (
-              <div>
-                <h4 className="font-semibold mb-2 text-primary">Summary</h4>
-                <p className="text-sm text-foreground">{result.summary}</p>
-              </div>
-            )}
+            {/* normalize: some endpoints wrap content in `synthesis` */}
+            {(() => {
+              const synth = result.synthesis ?? result;
+              const summary = synth.summary ?? synth?.summary_text ?? null;
+              const insights = synth.insights ?? synth.agent_insights ?? null;
+              const recommendations = synth.recommendations ?? synth.recommendations ?? result.recommendations ?? null;
+              const metadata = result.metadata ?? synth.metadata ?? null;
 
-            {result.agent_insights && result.agent_insights.length > 0 && (
-              <div>
-                <h4 className="font-semibold mb-2 text-primary">Agent Insights</h4>
-                <ul className="space-y-1">
-                  {result.agent_insights.map((insight: string, idx: number) => (
-                    <li key={idx} className="text-sm text-muted-foreground">
-                      • {insight}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+              return (
+                <>
+                  {summary && (
+                    <div>
+                      <h4 className="font-semibold mb-2 text-primary">Summary</h4>
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{summary}</p>
+                    </div>
+                  )}
 
-            {result.recommendations && result.recommendations.length > 0 && (
-              <div>
-                <h4 className="font-semibold mb-2 text-warning">Recommendations</h4>
-                <ul className="space-y-1">
-                  {result.recommendations.map((rec: string, idx: number) => (
-                    <li key={idx} className="text-sm text-foreground">
-                      ✓ {rec}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+                  {insights && (typeof insights === 'object') && Object.keys(insights).length > 0 && (
+                    <div>
+                      <h4 className="font-semibold mb-2 text-primary">Insights</h4>
+                      <ul className="space-y-1">
+                        {Object.entries(insights).map(([k, v]) => (
+                          <li key={k} className="text-sm text-muted-foreground">
+                            <strong className="text-xs">{k}:</strong> {String(v)}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
-            {result.metadata && (
-              <div className="pt-4 border-t border-border">
-                <h4 className="font-semibold mb-2 text-sm text-muted-foreground">Metadata</h4>
-                <div className="flex flex-wrap gap-2">
-                  {result.metadata.agents_used && (
-                    <Badge variant="outline" className="text-xs">
-                      Agents: {result.metadata.agents_used.join(", ")}
-                    </Badge>
+                  {Array.isArray(recommendations) && recommendations.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold mb-2 text-warning">Recommendations</h4>
+                      <ul className="space-y-1">
+                        {recommendations.map((rec: any, idx: number) => (
+                          <li key={idx} className="text-sm text-foreground">
+                            ✓ {typeof rec === 'string' ? rec : rec.recommendation || JSON.stringify(rec)}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   )}
-                  {result.metadata.query_type && (
-                    <Badge variant="outline" className="text-xs">
-                      Type: {result.metadata.query_type}
-                    </Badge>
+
+                  {metadata && (
+                    <div className="pt-4 border-t border-border">
+                      <h4 className="font-semibold mb-2 text-sm text-muted-foreground">Metadata</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {metadata.agents_used && (
+                          <Badge variant="outline" className="text-xs">
+                            Agents: {Array.isArray(metadata.agents_used) ? metadata.agents_used.join(", ") : String(metadata.agents_used)}
+                          </Badge>
+                        )}
+                        {metadata.query_type && (
+                          <Badge variant="outline" className="text-xs">
+                            Type: {metadata.query_type}
+                          </Badge>
+                        )}
+                        {metadata.response_time && (
+                          <Badge variant="outline" className="text-xs">
+                            Response: {metadata.response_time}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   )}
-                  {result.metadata.response_time && (
-                    <Badge variant="outline" className="text-xs">
-                      Response: {result.metadata.response_time}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            )}
+                </>
+              );
+            })()}
           </CardContent>
         </Card>
       )}

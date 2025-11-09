@@ -7,9 +7,7 @@ import { nlqApi, StreamEvent } from "@/lib/nlqApi";
 import { useToast } from "@/hooks/use-toast";
 
 interface QueryInputProps {
-  database: string;
   model: string;
-  apiBase: string;
   onEventReceived: (event: StreamEvent) => void;
   onQueryComplete: (question: string, sql: string | undefined, status: "success" | "error", executionTime?: number) => void;
   isQuerying: boolean;
@@ -17,9 +15,7 @@ interface QueryInputProps {
 }
 
 export const QueryInput = ({
-  database,
   model,
-  apiBase,
   onEventReceived,
   onQueryComplete,
   isQuerying,
@@ -36,25 +32,28 @@ export const QueryInput = ({
     let executionTime: number | undefined;
 
     try {
-      const stream = nlqApi.streamQuery(question, database, model, apiBase);
+  const stream = nlqApi.streamQuery(question, model);
       
       for await (const event of stream) {
         onEventReceived(event);
-        
-        if (event.type === "sql" && event.data) {
+
+        const evType = (event as any).type || (event as any).event;
+
+        if (evType === "sql" && event.data) {
           sql = event.data;
         }
-        
-        if (event.type === "complete") {
-          executionTime = event.execution_time;
+
+        if (evType === "complete") {
+          // execution time may be on event.execution_time or nested in event.data.execution_time_ms
+          executionTime = event.execution_time ?? (event.data?.execution_time_ms ? event.data.execution_time_ms / 1000 : undefined);
           onQueryComplete(question, sql, "success", executionTime);
           toast({
             title: "Query completed",
-            description: `Executed in ${executionTime?.toFixed(2)}s`,
+            description: `Executed in ${executionTime ? executionTime.toFixed(2) + 's' : 'unknown time'}`,
           });
         }
-        
-        if (event.type === "error") {
+
+        if (evType === "error") {
           onQueryComplete(question, sql, "error");
           toast({
             title: "Query failed",
@@ -84,7 +83,7 @@ export const QueryInput = ({
         <Textarea
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder="e.g., Show me the top 10 users by activity in the last 30 days..."
+          placeholder="e.g., Show me the latest 10 log entries..."
           className="min-h-[100px] resize-none"
           disabled={isQuerying}
         />
