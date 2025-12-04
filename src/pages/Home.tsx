@@ -47,7 +47,7 @@ const SubtitleAnimated = ({ children }: { children: React.ReactNode }) => {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Database, Activity, MessageSquare, Cloud, Server } from "lucide-react";
+import { Database, Activity, MessageSquare, Cloud, Server, LayoutDashboard } from "lucide-react";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -67,12 +67,21 @@ const Home = () => {
       id: "orbit",
       title: "ORBIT",
       subtitle: "Risk-Based Telemetry",
-      // tagline: "From Chaos to Clarity",
       description: "AI-powered operational intelligence for monitoring application, logs, metrics and alerts.",
       status: "Active",
       borderColor: "border-primary",
       icon: Activity,
       route: "/orbit",
+    },
+    {
+      id: "metabase",
+      title: "Metabase AI",
+      subtitle: "Dashboard Generator",
+      description: "Generate Metabase dashboards instantly using natural language queries powered by AI.",
+      status: "Active",
+      borderColor: "border-cyan-500",
+      icon: LayoutDashboard,
+      route: "/metabase",
     },
     {
       id: "im",
