@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Orbit from "./pages/Orbit";
 import NlqSql from "./pages/NlqSql";
+import MetabaseDashboard from "./pages/MetabaseDashboard";
 import NotFound from "./pages/NotFound";
 import { queryClient } from "./lib/queryClient";
 
@@ -19,6 +20,7 @@ const App = () => (
           <Route path="/" element={<Home />} />
           <Route path="/orbit" element={<Orbit />} />
           <Route path="/nlq-sql" element={<NlqSql />} />
+          <Route path="/metabase" element={<MetabaseDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
